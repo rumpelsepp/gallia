@@ -13,13 +13,6 @@ GALLIA_CONFIG
 : The path to the config file usually called `gallia.toml`.
   Disables autodiscovery of the config.
 
-GALLIA_LOGLEVEL
-: When {meth}`gallia.log.setup_logging()` is called without an argument this environment variable is read to set the loglevel.
-  Supported value are: `trace`, `debug`, `info`, `notice`, `warning`, `error`, `critical`.
-  As an alternative, the int values from 0 to 7 can be used.
-  Mostly useful in own scripts or tests.
-  This variable is not read when using the gallia cli.
-
 GALLIA_LOGGING_SYSTEMD
 : Tells gallia to omit colors and status bars in logging output.
   Additionally, the priority information gets added such that the journal can add it.
