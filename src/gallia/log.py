@@ -344,9 +344,9 @@ class _PenlogRecordV2(msgspec.Struct, omit_defaults=True, tag=2, tag_field="vers
 _PenlogRecord: TypeAlias = _PenlogRecordV2
 
 
-def _colorize_msg(data: str, levelno: int) -> tuple[str, int]:
+def _colorize_msg(data: str, levelno: int) -> str:
     if sys.platform == "win32" or not sys.stderr.isatty():
-        return data, 0
+        return data
 
     out = ""
     match levelno:
@@ -371,7 +371,12 @@ def _colorize_msg(data: str, levelno: int) -> tuple[str, int]:
     out += data
     out += _Color.RESET.value
 
-    return out, len(style)
+    return out
+
+
+def _delete_cur_line() -> None:
+    sys.stderr.write("\33[2K\r")
+    sys.stderr.flush()
 
 
 def _format_record(  # noqa: PLR0913
@@ -384,10 +389,11 @@ def _format_record(  # noqa: PLR0913
     colored: bool = False,
     volatile_info: bool = False,
 ) -> str:
+    delete_line = volatile_info and levelno <= Loglevel.INFO
+    if delete_line:
+        _delete_cur_line()
+
     msg = ""
-    if volatile_info:
-        msg += "\33[2K"
-    extra_len = 4
     msg += dt.strftime("%b %d %H:%M:%S.%f")[:-3]
     msg += " "
     msg += name
@@ -396,23 +402,24 @@ def _format_record(  # noqa: PLR0913
     msg += ": "
 
     if colored:
-        tmp_msg, extra_len_tmp = _colorize_msg(data, levelno)
-        msg += tmp_msg
-        extra_len += extra_len_tmp
+        msg += _colorize_msg(data, levelno)
     else:
         msg += data
-
-    if volatile_info and levelno <= Loglevel.INFO:
-        terminal_width, _ = shutil.get_terminal_size()
-        msg = msg[: terminal_width + extra_len - 1]  # Adapt length to invisible ANSI colors
-        msg += _Color.RESET.value
-        msg += "\r"
-    else:
-        msg += "\n"
 
     if stacktrace is not None:
         msg += "\n"
         msg += stacktrace
+
+    if delete_line:
+        # Truncate the line that gets deleted in
+        # in case the terminal wraps the line.
+        cols, _ = shutil.get_terminal_size()
+        msg = msg[:cols]
+        if colored:
+            msg = msg[:-2] + _Color.RESET.value
+        msg += "\r"
+    else:
+        msg += "\n"
 
     return msg
 
