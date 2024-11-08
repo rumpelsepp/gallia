@@ -389,13 +389,24 @@ def _format_record(  # noqa: PLR0913
     colored: bool = False,
     volatile_info: bool = False,
 ) -> str:
+    systemd = True if "GALLIA_LOGGING_SYSTEMD" in os.environ else False
+    if systemd:
+        colored = False
+        volatile_info = False
+
     delete_line = volatile_info and levelno <= Loglevel.INFO
     if delete_line:
         _delete_cur_line()
 
     msg = ""
-    msg += dt.strftime("%b %d %H:%M:%S.%f")[:-3]
-    msg += " "
+
+    # Add the priority info for the systemd journal…
+    if systemd:
+        msg += f"<{PenlogPriority.from_level(levelno).value}>"
+    # …else add timestamps if gallia runs under a terminal.
+    else:
+        msg += f"{dt.strftime('%b %d %H:%M:%S.%f')[:-3]} "
+
     msg += name
     if tags is not None and len(tags) > 0:
         msg += f" [{', '.join(tags)}]"

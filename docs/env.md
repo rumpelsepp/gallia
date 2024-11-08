@@ -20,5 +20,9 @@ GALLIA_LOGLEVEL
   Mostly useful in own scripts or tests.
   This variable is not read when using the gallia cli.
 
+GALLIA_LOGGING_SYSTEMD
+: Tells gallia to omit colors and status bars in logging output.
+  Additionally, the priority information gets added such that the journal can add it.
+
 NO_COLOR
 : If this variable is set, `gallia` by default does not use color codes, see: https://no-color.org/
